@@ -118,18 +118,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
-        {
-        'NAME': 'Project_TwoWaits.validators.NumberValidator',
-    },
-    {
-        'NAME': 'Project_TwoWaits.validators.UppercaseValidator',
-    },
-    {
-        'NAME': 'Project_TwoWaits.validators.SymbolValidator',
-    },
-    {
-        'NAME': 'Project_TwoWaits.validators.NumPatternValidator',
-    },
 ]
 
 
@@ -164,6 +152,15 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+# -------EMAIL CONFIGURATION-----------#
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS=True
+
+
 
 AUTH_USER_MODEL = 'Accounts.UserAccount'
 

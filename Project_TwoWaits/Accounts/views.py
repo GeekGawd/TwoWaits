@@ -3,17 +3,49 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+
 # ------ models --------
-from .models import UserAccount
+from .models import UserAccount, OTP
+
+from .serializers import (
+    AccountSerializer,
+)
 
 # ------ django AUTH ------
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 
-from .serializers import (
-    AccountSerializer
-)
+# -------utilities-------
+from random import randint
+from Project_TwoWaits.settings import EMAIL_HOST_USER
+from django.core.mail import EmailMultiAlternatives
+from django.utils import timezone
+from datetime import timedelta
 
+
+# -------CHANGE TO CLASS BASED--------
+# ------ For Sending OTP to passed E-Mail -------
+def send_otp(email):
+    # generating 4-digit OTP
+    otp = randint(1000,9999)
+    # getting account
+    user = UserAccount.objects.get(email=email)
+    try:
+        OTP.objects.create(otp_account_id=user, otp=otp)
+
+    except:
+        new_otp = OTP.objects.get(otp_account_id=user)
+        new_otp.otp = otp
+        new_otp.save()
+        
+    from_email, to = EMAIL_HOST_USER, email
+    subject = "OTP for TwoWaits Sign-Up"
+    text_content = f'Your One Time Password for signing up on V-Shop is {otp}.\nValid for only 2 minutes.\nDO NOT SHARE IT WITH ANYBODY.'
+    html_content = f'<span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px;"><p style="font-size: 18px;">DO NOT SHARE IT WITH ANYBODY.</p><p>Valid for only 5 minutes.</p><p>Your One Time Password for signing up on V-Shop is <strong style="font-size: 18px;">{otp}</strong>.</p></span>'
+    msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
+#------------------------------------------------
 
 class NewAccount(APIView):
     permission_classes = (AllowAny,)
@@ -69,3 +101,43 @@ class LoginAccount(APIView):
             message = {'message':'No matching user found'}
             return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
         # check_pswd returns True for match
+
+# EXPIRATION SET
+class OtpVerify(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        try:
+            send_otp(request.data.get('email',))
+            message = {'message':'OTP sent'}
+            return Response(message, status=status.HTTP_200_OK)
+        except:
+            message = {'message':'OTP could not be sent'}
+            return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
+        email = request.data.get("email",)
+        entered_otp = request.data.get("otp",)
+        # send_otp(email)
+        try:
+            user = UserAccount.objects.get(email__iexact = email)
+
+            if str(user.otp) == str(entered_otp):
+                expiry = user.otp.created + timedelta(minutes=2)
+                current = timezone.now()
+                if expiry < current:
+                    message = {'message':'OTP expired'}
+                    return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
+                    
+                else:
+                    print("yessss")
+                    user.is_verified = True
+                    user.save()
+                    message = {'message':'OTP matched account verified'}
+                    return Response(message, status=status.HTTP_202_ACCEPTED)
+            else:
+                message = {'message':'OTP doesn\'t match'}
+                return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            message = {'message':'User not found'}
+            return Response(message, status=status.HTTP_401_UNAUTHORIZED)

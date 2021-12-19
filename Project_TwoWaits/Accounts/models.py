@@ -38,12 +38,10 @@ class UserAccount(AbstractBaseUser):
         return self.email
 
 class OTP(models.Model):
-    def expiry():
-        return timezone.now()+timedelta(minutes=2)
-    
+
     otp_account_id = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name='otp')
-    otp = models.IntegerField(max_length=4)
-    expiry = models.DateTimeField(default=expiry)
+    otp = models.IntegerField()
+    created = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f'{self.otp}'

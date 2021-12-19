@@ -50,7 +50,11 @@ class NumPatternValidator(object):
                 _("The password must not contain common number pattern"),
                 code='password_contain_common_number_pattern',
             )
-
+        if re.search('121', password):
+            raise ValidationError(
+                _("The password must not contain common number pattern"),
+                code='password_contain_common_number_pattern',
+            )
     def get_help_text(self):
         return _(
             "The password must not contain common number pattern"

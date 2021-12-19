@@ -1,4 +1,5 @@
-from .models import UserAccount
+from rest_framework.views import APIView
+from .models import UserAccount, OTP
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
@@ -18,3 +19,8 @@ class AccountSerializer(ModelSerializer):
 # class LoginUserSerializer(serializers.Serializer):
 #     email = serializers.EmailField()
 #     password = serializers.CharField(max_length=128, write_only=True)
+
+# class OTPSerializer(APIView):
+#     class meta:
+#         model = OTP
+#         fields = ['otp']
