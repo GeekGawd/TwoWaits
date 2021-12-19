@@ -3,6 +3,10 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import EmailValidator
 
+# timezone
+from django.utils import timezone
+from datetime import timedelta
+
 class CustomAccountManager(BaseUserManager):
 
     def create_user(self, email, password, **other_fields):
@@ -32,3 +36,14 @@ class UserAccount(AbstractBaseUser):
 
     def __str__(self):
         return self.email
+
+class OTP(models.Model):
+    def expiry():
+        return timezone.now()+timedelta(minutes=2)
+    
+    otp_account_id = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name='otp')
+    otp = models.IntegerField(max_length=4)
+    expiry = models.DateTimeField(default=expiry)
+
+    def __str__(self):
+        return f'{self.otp}'
