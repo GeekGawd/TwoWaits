@@ -22,6 +22,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.utils import timezone
 from datetime import timedelta
 
+# ------OTP-------
+otp_expire_duration = 2
+
 
 # -------CHANGE TO CLASS BASED--------
 # ------ For Sending OTP to passed E-Mail -------
@@ -36,12 +39,13 @@ def send_otp(email):
     except:
         new_otp = OTP.objects.get(otp_account_id=user)
         new_otp.otp = otp
+        new_otp.created = timezone.now()
         new_otp.save()
         
     from_email, to = EMAIL_HOST_USER, email
     subject = "OTP for TwoWaits Sign-Up"
     text_content = f'Your One Time Password for signing up on V-Shop is {otp}.\nValid for only 2 minutes.\nDO NOT SHARE IT WITH ANYBODY.'
-    html_content = f'<span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px;"><p style="font-size: 18px;">DO NOT SHARE IT WITH ANYBODY.</p><p>Valid for only 5 minutes.</p><p>Your One Time Password for signing up on V-Shop is <strong style="font-size: 18px;">{otp}</strong>.</p></span>'
+    html_content = f'<span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px;"><p style="font-size: 18px;">DO NOT SHARE IT WITH ANYBODY.</p><p>Valid for only {otp_expire_duration} minutes.</p><p>Your One Time Password for signing up on V-Shop is <strong style="font-size: 18px;">{otp}</strong>.</p></span>'
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
     msg.attach_alternative(html_content, "text/html")
     msg.send()
@@ -102,7 +106,7 @@ class LoginAccount(APIView):
             return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
         # check_pswd returns True for match
 
-# EXPIRATION SET
+
 class OtpVerify(APIView):
     permission_classes = (AllowAny,)
 
@@ -123,8 +127,10 @@ class OtpVerify(APIView):
             user = UserAccount.objects.get(email__iexact = email)
 
             if str(user.otp) == str(entered_otp):
-                expiry = user.otp.created + timedelta(minutes=2)
+                expiry = user.otp.created + timedelta(minutes=otp_expire_duration)
                 current = timezone.now()
+                print(expiry)
+                print(current)
                 if expiry < current:
                     message = {'message':'OTP expired'}
                     return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -138,6 +144,37 @@ class OtpVerify(APIView):
             else:
                 message = {'message':'OTP doesn\'t match'}
                 return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            message = {'message':'User not found'}
+            return Response(message, status=status.HTTP_401_UNAUTHORIZED)
+
+
+# Flow : Direct after OTP verification
+class ForgotResetPassword(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        email = request.data.get("email",) or request.user.email
+        new_password = request.data.get("new_password")
+        try:
+            user = UserAccount.objects.get(email__iexact = email)
+            print(user.password)
+            print(new_password)
+
+            if check_password(new_password, user.password):
+                message = {'message':'Password cannot be same as old one'}
+                return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
+            else:
+                try:
+                    validate_password(new_password)
+                except:
+                    message = 'Please Enter a valid password. Password should have atleast 1 Capital Letter, 1 Number and 1 Special Character in it. Also it should not contain 123'
+                    return Response({'message': message},status=status.HTTP_400_BAD_REQUEST)
+                
+                user.password = make_password(new_password)
+                user.save()
+                message = {'message':'Password Changed Successfully'}
+                return Response(message, status=status.HTTP_202_ACCEPTED)
         except:
             message = {'message':'User not found'}
             return Response(message, status=status.HTTP_401_UNAUTHORIZED)
