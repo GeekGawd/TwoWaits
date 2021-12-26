@@ -45,7 +45,7 @@ def send_otp(email):
     from_email, to = EMAIL_HOST_USER, email
     subject = "OTP for TwoWaits Sign-Up"
     text_content = f'Your One Time Password for signing up on V-Shop is {otp}.\nValid for only 2 minutes.\nDO NOT SHARE IT WITH ANYBODY.'
-    html_content = f'<span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px;"><p style="font-size: 18px;">DO NOT SHARE IT WITH ANYBODY.</p><p>Valid for only {otp_expire_duration} minutes.</p><p>Your One Time Password for signing up on V-Shop is <strong style="font-size: 18px;">{otp}</strong>.</p></span>'
+    html_content = f'<span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px;"><p style="font-size: 18px;">DO NOT SHARE IT WITH ANYBODY.</p><p>Valid for only {otp_expire_duration} minutes.</p><p>Your One Time Password for signing up on Two Waits is <strong style="font-size: 18px;">{otp}</strong>.</p></span>'
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
     msg.attach_alternative(html_content, "text/html")
     msg.send()
