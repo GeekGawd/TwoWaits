@@ -102,7 +102,7 @@ DATABASES = {
         'USER': env('USER'),
         'PASSWORD': env('PASSWORD'),
         'PORT': env('PORT'),
-        'HOST': env('HOST')
+        'HOST': "127.0.0.1"
     }
 }
 import dj_database_url
