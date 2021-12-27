@@ -97,7 +97,7 @@ django_heroku.settings(locals())
 
 DATABASES = {
     'default': {
-        'ENGINE': env('ENGINE'),
+        'ENGINE':'django.db.backends.postgresql_psycopg2',
         'NAME': env('NAME'),
         'USER': env('USER'),
         'PASSWORD': env('PASSWORD'),
@@ -105,6 +105,9 @@ DATABASES = {
         'HOST': env('HOST')
     }
 }
+import dj_database_url
+db_from_env = dj_database_url.config(conn_max_age=600)
+DATABASES['default'].update(db_from_env)
 
 
 # Password validation
